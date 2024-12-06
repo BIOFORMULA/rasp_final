@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspadinha Virtual</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        #raspadinha {
+            width: 400px;
+            height: 200px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Camada superior que será raspada */
+        #risco {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(128, 128, 128, 0.7); /* Cor de cobertura */
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-image: url('atuaizadocapa.png'); /* A imagem de cobertura */
+            background-size: cover;
+        }
+
+        /* Camada inferior (prêmio) */
+        #premio {
+            width: 100%;
+            height: 100%;
+            background-image: url('atualizadopremio.png'); /* Imagem do prêmio */
+            background-size: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h2>Raspadinha Virtual</h2>
+        <div id="raspadinha">
+            <canvas id="canvas"></canvas>
+            <div id="premio"></div>
+        </div>
+        <p style="text-align: center; font-size: 16px; color: #333;">Raspe para descobrir o prêmio!</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const raspadinha = document.getElementById("raspadinha");
+
+        // Configurações do canvas
+        canvas.width = raspadinha.offsetWidth;
+        canvas.height = raspadinha.offsetHeight;
+
+        // Preenchendo o canvas com a camada de raspagem
+        ctx.fillStyle = "#808080";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Desenhar a imagem de cobertura (opcional)
+        const img = new Image();
+        img.src = "capaf.png";
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+
+        let isDrawing = false;
+
+        // Eventos de toque e mouse
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("mousemove", draw);
+        canvas.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("mouseleave", stopDrawing);
+
+        canvas.addEventListener("touchstart", startDrawing);
+        canvas.addEventListener("touchmove", draw);
+        canvas.addEventListener("touchend", stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e); // Começar a desenhar imediatamente
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            ctx.globalCompositeOperation = "destination-out";
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+
+            // Verificar se a maior parte da camada foi removida
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            let count = 0;
+
+            for (let i = 0; i < pixels.length; i += 4) {
+                if (pixels[i + 3] === 0) count++; // Pixel transparente
+            }
+
+            if (count > (pixels.length / 4) * 0.7) {
+                canvas.style.display = "none"; // Ocultar a camada de raspagem
+            }
+        }
+    </script>
+</body>
+</html>
